@@ -1,0 +1,38 @@
+---
+title: "Final_project_data_simulation"
+author: "Xi Yang"
+date: "11/13/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(simstudy)
+```
+continuous measures of sleep quality, depression symptoms, and quality of life indices
+socioeconomic status, education, and ethnicity
+https://nces.ed.gov/blogs/nces/post/educational-attainment-differences-by-students-socioeconomic-status
+```{r data_structure}
+def <- defData(varname = "SQ1", dist = "normal", formula = 8, variance = 2, id = "ID")
+def <- defData(def, varname = "SQ2", dist = "normal", formula = 5, variance = 3)
+def <- defData(def, varname = "SQ3", dist = "normal", formula = 6, variance = 2)
+def <- defData(def, varname = "SQ4", dist = "normal", formula = 3, variance = 5)
+def <- defData(def, varname = "MDD1", dist = "normal", formula = 5, variance = 2)
+def <- defData(def, varname = "MDD2", dist = "normal", formula = 4, variance = 1)
+def <- defData(def, varname = "MDD3", dist = "normal", formula = 3, variance = 3)
+def <- defData(def, varname = "QL1", dist = "normal", formula = 7, variance = 2)
+def <- defData(def, varname = "QL2", dist = "normal", formula = 3, variance = 5)
+def <- defData(def, varname = "QL3", dist = "normal", formula = 3, variance = 1)
+def <- defData(def, varname = "SES", dist = "categorical", formula = "0.4;0.5;0.1")
+def <- defData(def, varname = "ED", dist = "categorical", formula = "0.1;0.3;0.4;0.2")
+def <- defData(def, varname = "EN", dist = "categorical", formula = "0.7;0.09;0.03;0.06;0.1;0.015;0.005")
+dt <- genData(250,def)
+dt <- dt %>% 
+  mutate_if(is.integer, as.factor) %>% 
+  mutate_if(is.double, as.integer)
+levels(dt$SES) <- c("LowSES", "MiddleSES", "HighSES")
+levels(dt$ED) <- c("Less than high school completion", "High school completion", "Some postsecondary education", "Postsecondary certificate")
+levels(dt$EN) <- c("European-American", "Hispanic", "American Indian/Alaska Native", "Asian", "African-American", "Pacific Islander", "Other")
+write.csv(dt, "Final_project_simulated_data.csv")
+```
