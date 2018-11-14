@@ -42,4 +42,38 @@ ggplot(scorebySES, aes(x = SES, y = meanMDD, fill = SES)) +
   labs(title = "MDD Scores by SES", y = "MDD Total Score")
 ```
 
+```{r Data visualization 2}
+#Select and filter data
+data_p <- data %>%  
+                select(ID, SES, EN, SQtotal, MDDtotal, QLtotal) %>% 
+                filter(SES == "LowSES")
+
+#Scatterplot of sleep quality vs. depression
+ggplot(data_p, aes(x = SQtotal, y = MDDtotal)) + 
+  geom_point(position = "jitter", aplha = 0.7) + 
+  geom_smooth(method = "lm") +
+  theme_minimal() + 
+  labs(title = "Sleep Quality vs. Depression in low SES individuals",
+       x = "Sleep Quality", 
+       y = "Depression")
+
+#Scatterplot of quality of life vs. depression
+ggplot(data_p, aes(x = SQtotal, y = QLtotal)) + 
+  geom_point(position = "jitter", aplha = 0.7) + 
+  geom_smooth(method = "lm") +
+  theme_minimal() + 
+  labs(title = "Sleep Quality vs. Quality of Life in low SES individuals",
+       x = "Sleep Quality", 
+       y = "Quality of Life")
+
+#Scatterplot of quality of life vs. depression
+ggplot(data_p, aes(x = QLtotal, y = MDDtotal)) + 
+  geom_point(position = "jitter", aplha = 0.7) + 
+  geom_smooth(method = "lm") +
+  theme_minimal() + 
+  labs(title = "Quality of Life vs. Depression in low SES individuals",
+       x = "Quality of Life", 
+       y = "Depression")
+```
+
 The mean total depression score for the sample is `r round(mean(data$MDDtotal), 2)` . The mean total sleep quality score for the sample is `r round(mean(data$SQtotal), 2)`. The mean quality of life score for the sample is`r round(mean(data$MDDtotal),2)`. 
