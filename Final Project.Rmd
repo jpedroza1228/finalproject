@@ -6,34 +6,38 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
+#Load libraries
 library(rio)
 library(tidyverse)
 library(here)
 library(dplyr)
 library(knitr)
+```
 
+```{r Data visualization, include=FALSE}
+#Import data
 data <- import("Final_project_simulated_data.csv")
 View(data)
 
-#creating total scores
+#Creating total scores
 data <- data %>% 
   mutate(SQtotal = SQ1 + SQ2 + SQ3 + SQ4, 
          MDDtotal = MDD1 + MDD2 + MDD3,
          QLtotal = QL1 + QL2 + QL3)
 
-#grouping by SES and creating a summary of MDD, SQ, and QL total scores
+#Grouping by SES and creating a summary of MDD, SQ, and QL total scores
 scorebySES <- data %>% 
   group_by(SES) %>% 
   summarize(meanMDD = mean(MDDtotal),
             meanSQ = mean(SQtotal),
             meanQL = mean(QLtotal))
+
+#Table summary
 kable(scorebySES)
 
-#bar graph of MDD scores by SES
+#Bar graph of MDD scores by SES
 ggplot(scorebySES, aes(x = SES, y = meanMDD, fill = SES)) + 
   geom_col(aplha = 0.7) + 
   theme_minimal() + 
   labs(title = "MDD Scores by SES", y = "MDD Total Score")
 ```
-
-
