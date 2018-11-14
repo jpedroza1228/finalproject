@@ -14,12 +14,12 @@ library(dplyr)
 library(knitr)
 ```
 
-```{r Data visualization, include=FALSE}
+```{r Data visualization}
 #Import data
 data <- import("Final_project_simulated_data.csv")
 View(data)
 
-#Creating total scores
+#Calculate total scores
 data <- data %>% 
   mutate(SQtotal = SQ1 + SQ2 + SQ3 + SQ4, 
          MDDtotal = MDD1 + MDD2 + MDD3,
