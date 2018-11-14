@@ -1,0 +1,16 @@
+---
+title: "Final Project"
+author: "Alexis Adams-Clark"
+date: "11/14/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(rio)
+library(tidyverse)
+library(here)
+
+data <- import("Final_project_simulated_data.csv")
+```
+
+
