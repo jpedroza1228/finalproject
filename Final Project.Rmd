@@ -17,7 +17,7 @@ library(knitr)
 ```{r Data visualization}
 #Import data
 data <- import("Final_project_simulated_data.csv")
-View(data)
+#View(data)
 
 #Calculate total scores
 data <- data %>% 
@@ -41,3 +41,5 @@ ggplot(scorebySES, aes(x = SES, y = meanMDD, fill = SES)) +
   theme_minimal() + 
   labs(title = "MDD Scores by SES", y = "MDD Total Score")
 ```
+
+The mean total depression score for the sample is `r round(mean(data$MDDtotal), 2)` . The mean total sleep quality score for the sample is `r round(mean(data$SQtotal), 2)`. The mean quality of life score for the sample is`r round(mean(data$MDDtotal),2)`. 
