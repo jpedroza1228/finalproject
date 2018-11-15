@@ -17,7 +17,8 @@ library(knitr)
 ####  Data visualizations
 ```{r Data visualization}
 #Import data
-data <- as.tibble(import("Final_project_simulated_data.csv"))
+list(here())
+data <- import(here("Data", "Final_project_simulated_data.csv"))
 #View(data)
 
 #Calculate total scores

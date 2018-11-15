@@ -9,30 +9,57 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(simstudy)
+library(here)
 ```
 continuous measures of sleep quality, depression symptoms, and quality of life indices
 socioeconomic status, education, and ethnicity
 https://nces.ed.gov/blogs/nces/post/educational-attainment-differences-by-students-socioeconomic-status
 ```{r data_structure}
-def <- defData(varname = "SQ1", dist = "normal", formula = 8, variance = 2, id = "ID")
-def <- defData(def, varname = "SQ2", dist = "normal", formula = 5, variance = 3)
-def <- defData(def, varname = "SQ3", dist = "normal", formula = 6, variance = 2)
-def <- defData(def, varname = "SQ4", dist = "normal", formula = 3, variance = 5)
-def <- defData(def, varname = "MDD1", dist = "normal", formula = 5, variance = 2)
-def <- defData(def, varname = "MDD2", dist = "normal", formula = 4, variance = 1)
-def <- defData(def, varname = "MDD3", dist = "normal", formula = 3, variance = 3)
-def <- defData(def, varname = "QL1", dist = "normal", formula = 7, variance = 2)
-def <- defData(def, varname = "QL2", dist = "normal", formula = 3, variance = 5)
-def <- defData(def, varname = "QL3", dist = "normal", formula = 3, variance = 1)
-def <- defData(def, varname = "SES", dist = "categorical", formula = "0.4;0.5;0.1")
+rm(def)
+rm(dt)
+
+def <- defData(varname = "SES", dist = "categorical", formula = "0.4;0.5;0.1", id = "ID")
 def <- defData(def, varname = "ED", dist = "categorical", formula = "0.1;0.3;0.4;0.2")
 def <- defData(def, varname = "EN", dist = "categorical", formula = "0.7;0.09;0.03;0.06;0.1;0.015;0.005")
-dt <- genData(250,def)
+dt <- genData(500,def)
+
+mu <- c(3, 5)
+sigma <- c(1, 2)
+dt <- addCorData(dt, "ID", mu = mu, sigma = sigma, rho = -.8, corstr = "cs")
+dt <- addCorData(dt, "ID", mu = mu, sigma = sigma, rho = -.9, corstr = "cs")
+
+mu2 <- c(3, 3)
+sigma <- c(1, 2)
+dt <- addCorData(dt, "ID", mu = mu2, sigma = sigma, rho = .7, corstr = "cs")
+dt <- addCorData(dt, "ID", mu = mu2, sigma = sigma, rho = -.9, corstr = "cs")
+dt <- addCorData(dt, "ID", mu = mu2, sigma = sigma, rho = .9, corstr = "cs")
+
+colnames(dt)[5] <- "MDD1"
+colnames(dt)[6] <- "QL1"
+colnames(dt)[7] <- "QL2"
+colnames(dt)[8] <- "SQ1"
+colnames(dt)[9] <- "MDD2"
+colnames(dt)[10] <- "QL3"
+colnames(dt)[11] <- "MDD3"
+colnames(dt)[12] <- "SQ2"
+colnames(dt)[13] <- "SQ3"
+colnames(dt)[14] <- "SQ4"
+
 dt <- dt %>% 
   mutate_if(is.integer, as.factor) %>% 
   mutate_if(is.double, as.integer)
 levels(dt$SES) <- c("LowSES", "MiddleSES", "HighSES")
 levels(dt$ED) <- c("Less than high school completion", "High school completion", "Some postsecondary education", "Postsecondary certificate")
 levels(dt$EN) <- c("European-American", "Hispanic", "American Indian/Alaska Native", "Asian", "African-American", "Pacific Islander", "Other")
-write.csv(dt, "Final_project_simulated_data.csv")
+
+dt <- dt %>%
+  filter(QL1 > 0 & QL3 > 0 & SQ2 > 0 & SQ4 > 0) %>%
+  filter(MDD2 < 6)
+
+colnames(dt)
+dt[c("ID", "SES", "ED", "EN", "SQ1", "SQ2", "SQ3", "SQ4", "MDD1", "MDD2", "MDD3", "QL1", "QL2", "QL3")]
+
+cat(format_delim(head(dt), ";"))
+
+write_csv(dt, file.path(here("Data"), "Final_project_simulated_data.csv"))
 ```
