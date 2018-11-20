@@ -7,12 +7,17 @@ output: html_document
 
 ```{r setup, include=FALSE}
 #Load libraries
+
+# JP - just a heads up in that you do not need to load dplyr 
+# it is part of the tidyverse so it is already loaded
+# you might want to delete loading dplyr, it's just there twice. 
 library(rio)
 library(tidyverse)
 library(here)
 library(dplyr)
 library(knitr)
 ```
+**JP - I think it would be better for readability in making your headers first or second level rather than third level heading. I also want to bring to your attention that you may want to apply the clean names function from the janitor package because some of your code has capitalized letters while other parts of your code (i.e., like your dataset) are in snake case. You may want to pick one or the other so that you don't forget which you're using when writing future code or if you work on this code after a while.**
 
 ####  Data visualizations
 ```{r Data visualization}
@@ -21,6 +26,10 @@ list(here())
 data <- import(here("Data", "Final_project_simulated_data.csv"))
 #View(data)
 
+# JP - I look forward to the specifics of your project because this sounds interesting.
+# When I knitted it, it worked out nicely. Good job.
+
+# JP - I would be curious to know what the variables mean from this dataset
 #Calculate total scores
 data <- data %>% 
   mutate(SQtotal = SQ1 + SQ2 + SQ3 + SQ4, 
@@ -45,10 +54,19 @@ ggplot(scorebySES, aes(x = SES, y = meanMDD, fill = SES)) +
 ```
 
 ```{r Data visualization 2}
+# JP - I'm interested in why specifically looking at low SES when high SES was
+# different in depression scores
+
 #Select and filter data
 data_p <- data %>%  
                 select(ID, SES, EN, SQtotal, MDDtotal, QLtotal) %>% 
                 filter(SES == "LowSES")
+
+# JP - I would move away from the titel of vs since it is just the potential association
+#  between the two variables
+
+# JP - Also, I don't want to touch your code but your ggplots are giving out 
+# warnings because it is spelled aplha rather than alpha in your plots.
 
 #Scatterplot of sleep quality vs. depression
 ggplot(data_p, aes(x = SQtotal, y = MDDtotal)) + 
@@ -87,6 +105,9 @@ Main_measure_data <- data %>%
   select(ID, SQ1:QL3) %>% 
   gather(items, value, -1) %>% 
   separate(items, c("Measure", "Item number"), sep = "(?=[:digit:])", convert = TRUE)
+
+# JP - I think this is helpful because if you included a count by race/ethnicity then
+# it shows at what level of SES has postesecondary schooling
 
 # again, not really helpful output but it shows how we have different columns for each race/ethnicity
 EN_data <- data %>%
