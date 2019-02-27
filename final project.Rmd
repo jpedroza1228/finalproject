@@ -1,0 +1,452 @@
+---
+title: "Final Project Visualizations"
+author: "Jonathan Pedroza"
+date: "February 5, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# install.packages("digest")
+# install.packages("Rcpp")
+library(tidyverse)
+library(here)
+library(rio)
+library(nhanesA)
+library(xaringan)
+library(ggridges)
+library(viridis)
+# devtools::install_github("hrbrmstr/ggalt")
+library(ggalt)
+
+```
+
+```{r}
+# Initial time to get data from nhanes datasets
+
+# demographics from 2011-2012
+demo_g <- nhanes('DEMO_G')
+
+# demographics from 2013-2014
+demo_h <- nhanes('DEMO_H')
+
+# demographics from 2015-2016
+demo_i <- nhanes('DEMO_I')
+
+
+# physical activity data frames 2011-2012
+paq_g <- nhanes('PAQ_G')
+
+# physical activity data frames 2013-2014
+paq_h <- nhanes('PAQ_H')
+
+# physical activity data frames 2015-2016
+paq_i <- nhanes('PAQ_I')
+
+
+# Example of exporting data into csv files
+write.csv(demo_g, "demo_g.csv")
+write.csv(demo_h, "demo_h.csv")
+write.csv(demo_i, "demo_i.csv")
+
+write.csv(paq_g, "paq_g.csv")
+write.csv(paq_h, "paq_h.csv")
+write.csv(paq_i, "paq_i.csv")
+
+```
+
+```{r loading csv files}
+ 
+demo_g <- import(here("data", "demo_g.csv"),
+                setclass = "tbl_df") %>% 
+  janitor::clean_names()
+demo_h <- import(here("data", "demo_h.csv"),
+                setclass = "tbl_df") %>% 
+  janitor::clean_names()
+demo_i <- import(here("data", "demo_i.csv"),
+                setclass = "tbl_df") %>% 
+  janitor::clean_names()
+
+paq_g <- import(here("data", "paq_g.csv"),
+                setclass = "tbl_df") %>% 
+  janitor::clean_names()
+paq_h <- import(here("data", "paq_h.csv"),
+                setclass = "tbl_df") %>% 
+  janitor::clean_names()
+paq_i <- import(here("data", "paq_i.csv"),
+                setclass = "tbl_df") %>% 
+  janitor::clean_names()
+
+
+```
+
+```{r}
+demo_g %>% 
+  count(seqn) %>% 
+  filter(n>1)
+
+demo_h %>% 
+  count(seqn) %>% 
+  filter(n>1)
+
+demo_i %>% 
+  count(seqn) %>% 
+  filter(n>1)
+
+paq_g %>% 
+  count(seqn) %>% 
+  filter(n>1)
+
+paq_h %>% 
+  count(seqn) %>% 
+  filter(n>1)
+
+paq_i %>% 
+  count(seqn) %>% 
+  filter(n>1)
+```
+
+
+```{r joins}
+
+super_demo <- full_join(demo_g, demo_h)
+demo <- full_join(super_demo, demo_i)
+
+super_pa <- full_join(paq_g, paq_h)
+pa <- full_join(super_pa, paq_i)
+
+demo %>%
+  count(seqn) %>% 
+  filter(n>1)
+
+pa %>% 
+  count(seqn) %>% 
+  filter(n>1)
+
+complete <- left_join(demo, pa, by = "seqn")
+
+```
+
+```{r}
+psych::describe(complete, na.rm = TRUE)
+
+complete <- complete %>%
+  dplyr::select(seqn,
+         sddsrvyr,
+         riagendr,
+         ridageyr,
+         ridreth3,
+         dmdborn4,
+         dmdcitzn,
+         dmdyrsus,
+         dmdeduc2,
+         dmdfmsiz,
+         indhhin2,
+         pad615,
+         pad630,
+         pad660, 
+         pad675, 
+         pad680, 
+         paq706,
+         paq710,
+         paq715)
+```
+
+
+```{r selecting specific variables}
+
+complete <- complete %>%
+   naniar::replace_with_na(replace = list(pad615 = c(7777, 9999),
+     paq715 = c(77, 99),
+     pad630 = c(7777, 9999),
+     pad660 = c(7777, 9999),
+     pad675 = c(7777, 9999),
+     pad680 = c(7777, 9999),
+     paq706 = c(77, 99),
+     paq710 = c(77, 99)))
+
+complete <- complete %>%
+  mutate(data_cycle = case_when(sddsrvyr == 7 ~ "2011_2012",
+                            sddsrvyr == 8 ~ "2013_2014",
+                            sddsrvyr == 9 ~ "2015_2016",
+                            TRUE ~ NA_character_))
+
+complete <- complete %>% 
+  mutate(gender = case_when(riagendr == 1 ~ "male",
+                            riagendr == 2 ~ "female",
+                            TRUE ~ NA_character_))
+
+complete <- complete %>% 
+  mutate(age = ridageyr)
+
+complete <- complete %>% 
+  mutate(race = case_when(ridreth3 == 1 ~ "mexican",
+                       ridreth3 == 2 ~ "other_hispanic",
+                       ridreth3 == 3 ~ "white",
+                       ridreth3 == 4 ~ "black",
+                       ridreth3 == 6 ~ "asian",
+                       ridreth3 == 7 ~ "multi",
+                       TRUE ~ NA_character_))
+
+complete <- complete %>% 
+  mutate(birth_country = case_when(dmdborn4 == 1 ~ "us_born",
+                                dmdborn4 == 2 ~ "other",
+                                TRUE ~ NA_character_))
+
+complete <- complete %>% 
+  mutate(citizen = case_when(dmdcitzn == 1 ~ "citizen",
+                          dmdcitzn == 2 ~ "not_citizen",
+                          TRUE ~ NA_character_))
+
+complete <- complete %>% 
+  mutate(length_us = case_when(dmdyrsus == 1 ~ "less_year",
+                            dmdyrsus == 2 ~ "1_5yr",
+                            dmdyrsus == 3 ~ "5_10yr",
+                            dmdyrsus == 4 ~ "10_15yr",
+                            dmdyrsus == 5 ~ "15_20yr",
+                            dmdyrsus == 6 ~ "20_30yr",
+                            dmdyrsus == 7 ~ "30_40yr",
+                            dmdyrsus == 8 ~ "40_50yr",
+                            dmdyrsus == 9 ~ "50_plus_yr",
+                            TRUE ~ NA_character_))
+
+complete <- complete %>% 
+  mutate(ed = case_when(dmdeduc2 == 1 ~ "less_9",
+                     dmdeduc2 == 2 ~ "9_11",
+                     dmdeduc2 == 3 ~ "highschool",
+                     dmdeduc2 == 4 ~ "aa",
+                     dmdeduc2 == 5 ~ "college_grad",
+                     TRUE ~ NA_character_))
+
+complete <- complete %>% 
+  mutate(household = case_when(dmdfmsiz == 1 ~ "1",
+                            dmdfmsiz == 2 ~ "2",
+                            dmdfmsiz == 3 ~ "3",
+                            dmdfmsiz == 4 ~ "4",
+                            dmdfmsiz == 5 ~ "5",
+                            dmdfmsiz == 6 ~ "6",
+                            dmdfmsiz == 7 ~ "7_plus",
+                            TRUE ~ NA_character_))
+
+complete <- complete %>% 
+  mutate(income = case_when(indhhin2 == 1 ~ "0_5k",
+                         indhhin2 == 2 ~ "5_10k",
+                         indhhin2 == 3 ~ "10_15k",
+                         indhhin2 == 4 ~ "15_20k",
+                         indhhin2 == 5 ~ "20_25k",
+                         indhhin2 == 6 ~ "25_35k",
+                         indhhin2 == 7 ~ "35_45k",
+                         indhhin2 == 8 ~ "45_55k",
+                         indhhin2 == 9 ~ "55_65k",
+                         indhhin2 == 10 ~ "65_75k",
+                         indhhin2 == 12 ~ NA_character_,
+                         indhhin2 == 13 ~ NA_character_,
+                         indhhin2 == 14 ~ "75_100k",
+                         indhhin2 == 15 ~ "100_plus",
+                         TRUE ~ NA_character_))
+
+complete <- complete %>% 
+  mutate(vig_work = pad615)
+
+complete <- complete %>% 
+  mutate(mod_work = pad630)
+
+complete <- complete %>% 
+  mutate(vig_rec_pa = pad660)
+
+complete <- complete %>% 
+  mutate(mod_rec_pa = pad675)
+
+complete <- complete %>% 
+  mutate(sed = pad680)
+
+complete <- complete %>% 
+  mutate(days_active_60 = case_when(paq706 == 0 ~ "0_day",
+                                 paq706 == 1 ~ "1_day",
+                                 paq706 == 2 ~ "2_day",
+                                 paq706 == 3 ~ "3_day",
+                                 paq706 == 4 ~ "4_day",
+                                 paq706 == 5 ~ "5_day",
+                                 paq706 == 6 ~ "6_day",
+                                 paq706 == 7 ~ "7_day",
+                                 TRUE ~ NA_character_))
+
+complete <- complete %>% 
+  mutate(hours_tv = case_when(paq710 == 0 ~ "less_hour",
+                             paq710 == 1 ~ "1_hour",
+                             paq710 == 2 ~ "2_hours",
+                             paq710 == 3 ~ "3_hours",
+                             paq710 == 4 ~ "4_hours",
+                             paq710 == 5 ~ "5_hours_plus",
+                             paq710 == 8 ~ "no_tv",
+                           TRUE ~ NA_character_))
+
+complete <- complete %>% 
+  mutate(hours_comp = case_when(paq715 == 0 ~ "less_hour",
+                             paq715 == 1 ~ "1_hour",
+                             paq715 == 2 ~ "2_hours",
+                             paq715 == 3 ~ "3_hours",
+                             paq715 == 4 ~ "4_hours",
+                             paq715 == 5 ~ "5_hours_plus",
+                             paq715 == 8 ~ "no_comp",
+                             TRUE ~ NA_character_))
+
+```
+
+```{r}
+
+data <- complete %>%
+  select(-2:-19)
+
+data$age_cut <- cut(data$age, breaks = c(0, 18, 25, 55, Inf),
+                    labels = c("minor", "young adult", "adult",
+                               "older adult"))
+
+```
+
+
+```{r}
+ggplot(data, aes(age, fill = age_cut)) +
+  geom_histogram(color = "white",
+                 alpha = .7,
+                 bins = 50) + 
+  facet_wrap(~data_cycle) +
+  labs(x = "Age",
+       y = "Count",
+       Title = "Breakdown of Participants by Age",
+       subtitle = "Separated by Age Group",
+       caption = "NHANES data from 2011-2012, 2013-2014, 2015-2016") +
+  guides(fill = "none")
+
+# Part of assignment to examine differences in sedentary behaviors by race and income
+
+ggplot(data, aes(gender, sed)) +
+  geom_col(alpha = .7, position = "dodge2", aes(fill = race)) +
+  scale_y_continuous(limits = c(0, 1250)) +
+  scale_fill_viridis_d() +
+  coord_flip() +
+  facet_wrap(~data_cycle) +
+    labs(x = "Gender",
+       y = "Sedentary Behaviors",
+       Title = "Breakdown of Participants by Gender",
+       subtitle = "Separated by Different Racial/Ethnic Groups",
+       caption = "NHANES data from 2011-2012, 2013-2014, 2015-2016") +
+  guides(fill = "none")
+
+ggplot(data, aes(gender, sed)) +
+  geom_col(alpha = .7, position = "dodge2", aes(fill = income)) +
+  scale_y_continuous(limits = c(0, 1250)) +
+  scale_fill_viridis_d() +
+  coord_flip() +
+  facet_wrap(~data_cycle) +
+    labs(x = "Gender",
+       y = "Sedentary Behaviors",
+       Title = "Breakdown of Participants by Gender",
+       subtitle = "Separated by Different Income",
+       caption = "NHANES data from 2011-2012, 2013-2014, 2015-2016") +
+  guides(fill = "none")
+
+# Part of the assignment to examine differences in activity by race and income
+
+ggplot(data, aes(gender, days_active_60)) +
+  geom_col(alpha = .7, position = "dodge2", aes(fill = race)) +
+  scale_fill_viridis_d() +
+  coord_flip() +
+  facet_wrap(~data_cycle) +
+    labs(x = "Gender",
+       y = "Days of Engagement in 60 Minutes of Physical Activity ",
+       Title = "Breakdown of Participants by Gender",
+       subtitle = "Separated by Different Racial/Ethnic Groups",
+       caption = "NHANES data from 2011-2012, 2013-2014, 2015-2016") +
+  guides(fill = "none")
+
+ggplot(data, aes(gender, days_active_60)) +
+  geom_col(alpha = .7, position = "dodge2", aes(fill = income)) +
+  scale_fill_viridis_d() +
+  coord_flip() +
+  facet_wrap(~data_cycle) +
+    labs(x = "Gender",
+       y = "Days of Engagement in 60 Minutes of Physical Activity ",
+       Title = "Breakdown of Participants by Gender",
+       subtitle = "Separated by Different Income",
+       caption = "NHANES data from 2011-2012, 2013-2014, 2015-2016") +
+  guides(fill = "none")
+
+```
+
+```{r}
+less_yr <- data %>%
+  filter(race == "mexican" | race == "other_hispanic") %>% 
+  filter(length_us == "less_year")
+
+fifty_plus <- data %>% 
+  filter(race == "mexican" | race == "other_hispanic") %>% 
+  filter(length_us == "50_plus_yr")
+
+# These two plots are one plot for my project
+# the first is looking at working physical activity and then the next one is similar
+# with recreational physical activity
+ggplot(data, aes(mod_work, vig_work)) +
+  geom_jitter(aes(color = race)) +
+  geom_encircle(aes(mod_work, vig_work),
+                data = less_yr,
+                color = "red",
+                size = 2,
+                expand = .04) +
+  geom_encircle(aes(mod_work, vig_work),
+                data = fifty_plus,
+                color = "blue",
+                size = 2,
+                expand = .04) +
+  facet_wrap(~data_cycle) +
+  scale_color_viridis_d()
+
+ggplot(data, aes(mod_rec_pa, vig_rec_pa)) +
+  geom_jitter(aes(color = race), size = 2) +
+  geom_encircle(aes(mod_rec_pa, vig_rec_pa),
+                data = less_yr,
+                color = "red",
+                size = 2,
+                expand = .04) +
+  geom_encircle(aes(mod_rec_pa, vig_rec_pa),
+                data = fifty_plus,
+                color = "blue",
+                size = 2,
+                expand = .04) +
+  facet_wrap(~data_cycle) +
+  scale_color_viridis_d()
+```
+
+```{r}
+# exploratory plots
+
+ggplot(data, aes(forcats::fct_reorder(data_cycle, sed), sed)) +
+  geom_col(alpha = .7, position = "dodge2", aes(fill = race)) +
+  scale_y_continuous(limits = c(0, 1250)) +
+  scale_fill_viridis_d(option = "magma")
+
+
+ggplot(data, aes(data_cycle)) +
+  geom_bar(aes(fill = fct_reorder(race, age)), position = "dodge2") +
+  scale_fill_viridis_d(option = "magma")
+
+ggplot(data, aes(race)) +
+  geom_bar(position = "dodge2", aes(fill = income)) +
+  facet_wrap(~data_cycle) +
+  coord_flip() +
+  scale_fill_viridis_d()
+
+ggplot(data, aes(gender, days_active_60)) +
+  geom_tile(aes(fill = age)) +
+  scale_fill_viridis_c()
+
+  ggplot(data, aes(mod_work, vig_work)) +
+  geom_smooth(aes(color = race), se = FALSE, method = "lm") +
+  facet_wrap(~data_cycle) +
+  scale_color_viridis_d() +
+  coord_flip()
+```
+

@@ -1,2 +1,2 @@
-# finalproject
-Final Project: Introduction to Data Science w/ R
+# edld610winter
+Repo for winter's course of data transformation and communications
